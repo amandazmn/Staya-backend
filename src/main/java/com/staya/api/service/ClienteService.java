@@ -8,6 +8,7 @@ import com.staya.api.mapper.ClienteMapper;
 import com.staya.api.mapper.Textos;
 import com.staya.api.model.Cliente;
 import com.staya.api.repository.ClienteRepository;
+import com.staya.api.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +19,13 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final EnderecoService enderecoService;
+    private final ReservaRepository reservaRepository;
 
-    public ClienteService(ClienteRepository clienteRepository, EnderecoService enderecoService) {
+    public ClienteService(ClienteRepository clienteRepository, EnderecoService enderecoService,
+                          ReservaRepository reservaRepository) {
         this.clienteRepository = clienteRepository;
         this.enderecoService = enderecoService;
+        this.reservaRepository = reservaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +56,11 @@ public class ClienteService {
 
     @Transactional
     public void excluir(Long id) {
-        clienteRepository.delete(buscarEntidade(id));
+        Cliente cliente = buscarEntidade(id);
+        if (reservaRepository.existsByClienteId(id)) {
+            throw new ConflitoException("Cliente possui reservas registradas e não pode ser excluído");
+        }
+        clienteRepository.delete(cliente);
     }
 
     private void preencher(ClienteRequestDTO dto, Cliente cliente) {
@@ -75,7 +83,7 @@ public class ClienteService {
         }
     }
 
-    private Cliente buscarEntidade(Long id) {
+    Cliente buscarEntidade(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente", id));
     }

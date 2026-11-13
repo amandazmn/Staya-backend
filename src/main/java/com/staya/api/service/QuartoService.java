@@ -4,13 +4,17 @@ import com.staya.api.dto.QuartoRequestDTO;
 import com.staya.api.dto.QuartoResponseDTO;
 import com.staya.api.exception.ConflitoException;
 import com.staya.api.exception.RecursoNaoEncontradoException;
+import com.staya.api.exception.RegraNegocioException;
 import com.staya.api.mapper.QuartoMapper;
 import com.staya.api.model.Quarto;
 import com.staya.api.model.StatusQuarto;
+import com.staya.api.model.StatusReserva;
 import com.staya.api.repository.QuartoRepository;
+import com.staya.api.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -18,15 +22,31 @@ public class QuartoService {
 
     private final QuartoRepository quartoRepository;
     private final TipoQuartoService tipoQuartoService;
+    private final ReservaRepository reservaRepository;
 
-    public QuartoService(QuartoRepository quartoRepository, TipoQuartoService tipoQuartoService) {
+    public QuartoService(QuartoRepository quartoRepository, TipoQuartoService tipoQuartoService,
+                         ReservaRepository reservaRepository) {
         this.quartoRepository = quartoRepository;
         this.tipoQuartoService = tipoQuartoService;
+        this.reservaRepository = reservaRepository;
     }
 
     @Transactional(readOnly = true)
     public List<QuartoResponseDTO> listar(StatusQuarto status, Long tipoQuartoId, Integer andar) {
         return quartoRepository.buscar(status, tipoQuartoId, andar).stream().map(QuartoMapper::toResponse).toList();
+    }
+
+    /** Quartos livres no período (entrada inclusiva, saída exclusiva) que comportam os hóspedes. */
+    @Transactional(readOnly = true)
+    public List<QuartoResponseDTO> listarDisponiveis(LocalDate entrada, LocalDate saida, int hospedes) {
+        if (!saida.isAfter(entrada)) {
+            throw new RegraNegocioException("Data de saída deve ser posterior à data de entrada");
+        }
+        if (hospedes < 1) {
+            throw new RegraNegocioException("Quantidade de hóspedes deve ser de pelo menos 1");
+        }
+        return quartoRepository.buscarDisponiveis(entrada, saida, hospedes, StatusQuarto.BLOQUEADO, StatusReserva.ATIVOS)
+                .stream().map(QuartoMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +82,9 @@ public class QuartoService {
         Quarto quarto = buscarEntidade(id);
         if (quarto.getStatus() == StatusQuarto.OCUPADO) {
             throw new ConflitoException("Quarto ocupado não pode ser excluído");
+        }
+        if (reservaRepository.existsByQuartoId(id)) {
+            throw new ConflitoException("Quarto possui reservas registradas e não pode ser excluído; use o status BLOQUEADO");
         }
         quartoRepository.delete(quarto);
     }
