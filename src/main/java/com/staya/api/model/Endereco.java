@@ -9,7 +9,7 @@ public class Endereco {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_endereco")
-    private Integer id;
+    private Long id;
 
     @Column(name = "logradouro", length = 100, nullable = false)
     private String logradouro;
@@ -53,11 +53,11 @@ public class Endereco {
 
     // Getters e Setters
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

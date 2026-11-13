@@ -1,12 +1,12 @@
 package com.staya.api.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class ClienteDTO {
-
-    private Long idCliente;
+public class ClienteRequestDTO {
 
     @NotBlank(message = "Nome é obrigatório")
     @Size(max = 50)
@@ -16,7 +16,7 @@ public class ClienteDTO {
     @Size(max = 100)
     private String sobrenome;
 
-    @Size(min = 11, max = 11, message = "CPF deve ter 11 dígitos")
+    @Pattern(regexp = "^$|\\d{11}", message = "CPF deve conter exatamente 11 dígitos numéricos")
     private String cpf;
 
     @Size(max = 20)
@@ -35,26 +35,14 @@ public class ClienteDTO {
 
     private Long enderecoId;
 
-    public ClienteDTO() {}
+    public ClienteRequestDTO() {}
 
-    public ClienteDTO(Long idCliente, String nome, String sobrenome, String cpf, String passaporte, String email, String telefone, String nacionalidade, Long enderecoId) {
-        this.idCliente = idCliente;
-        this.nome = nome;
-        this.sobrenome = sobrenome;
-        this.cpf = cpf;
-        this.passaporte = passaporte;
-        this.email = email;
-        this.telefone = telefone;
-        this.nacionalidade = nacionalidade;
-        this.enderecoId = enderecoId;
-    }
-
-    public Long getIdCliente() {
-        return idCliente;
-    }
-
-    public void setIdCliente(Long idCliente) {
-        this.idCliente = idCliente;
+    /**
+     * Todo hóspede precisa de ao menos um documento: CPF (brasileiros) ou passaporte (estrangeiros).
+     */
+    @AssertTrue(message = "Informe o CPF ou o passaporte")
+    public boolean isDocumentoInformado() {
+        return (cpf != null && !cpf.isBlank()) || (passaporte != null && !passaporte.isBlank());
     }
 
     public String getNome() {

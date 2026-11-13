@@ -1,14 +1,35 @@
 package com.staya.api.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class EnderecoRequestDTO {
 
+    @NotBlank(message = "Logradouro é obrigatório")
+    @Size(max = 100)
     private String logradouro;
+
+    @Size(max = 10)
     private String numero;
+
+    @Size(max = 50)
     private String complemento;
+
+    @Size(max = 50)
     private String bairro;
+
+    @NotBlank(message = "Cidade é obrigatória")
+    @Size(max = 50)
     private String cidade;
+
+    @Size(max = 50)
     private String estado;
+
+    @NotBlank(message = "País é obrigatório")
+    @Size(max = 50)
     private String pais;
+
+    @Size(max = 15)
     private String cep;
 
     public EnderecoRequestDTO() {}
