@@ -7,6 +7,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -30,6 +31,11 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.CONFLICT, "Conflito", ex.getMessage());
     }
 
+    @ExceptionHandler(RegraNegocioException.class)
+    public ProblemDetail handleRegraNegocio(RegraNegocioException ex) {
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Regra de negócio violada", ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleIntegridade(DataIntegrityViolationException ex) {
         return problem(HttpStatus.CONFLICT, "Conflito",
@@ -46,6 +52,12 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleParametroInvalido(MethodArgumentTypeMismatchException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Requisição inválida",
                 "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleParametroAusente(MissingServletRequestParameterException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "Parâmetro obrigatório ausente: '" + ex.getParameterName() + "'");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
