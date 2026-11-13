@@ -6,12 +6,14 @@ import com.staya.api.dto.QuartoStatusDTO;
 import com.staya.api.model.StatusQuarto;
 import com.staya.api.service.QuartoService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,6 +32,15 @@ public class QuartoController {
                                           @RequestParam(required = false) Long tipoQuartoId,
                                           @RequestParam(required = false) Integer andar) {
         return service.listar(status, tipoQuartoId, andar);
+    }
+
+    /** Ex.: GET /quartos/disponiveis?entrada=2026-12-20&saida=2026-12-23&hospedes=2 */
+    @GetMapping("/disponiveis")
+    public List<QuartoResponseDTO> listarDisponiveis(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate entrada,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate saida,
+            @RequestParam(defaultValue = "1") int hospedes) {
+        return service.listarDisponiveis(entrada, saida, hospedes);
     }
 
     @GetMapping("/{id}")
