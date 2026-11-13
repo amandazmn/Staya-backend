@@ -1,5 +1,6 @@
 package com.staya.api.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +30,7 @@ class ClienteEnderecoControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
                 .andReturn().getResponse().getContentAsString();
-        return Long.parseLong(body.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        return ((Number) JsonPath.read(body, "$.id")).longValue();
     }
 
     private String cliente(String cpf, String passaporte, Long enderecoId) {
@@ -126,7 +127,7 @@ class ClienteEnderecoControllerTest {
         String body = mvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON)
                         .content(cliente("12345678901", null, null)))
                 .andReturn().getResponse().getContentAsString();
-        long id = Long.parseLong(body.replaceAll(".*\"id\":(\\d+).*", "$1"));
+        long id = ((Number) JsonPath.read(body, "$.id")).longValue();
 
         mvc.perform(put("/clientes/" + id).contentType(MediaType.APPLICATION_JSON)
                         .content(cliente("12345678901", "XY999", null)))

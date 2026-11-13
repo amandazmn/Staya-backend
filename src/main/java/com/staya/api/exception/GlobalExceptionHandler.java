@@ -9,6 +9,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleCorpoInvalido(HttpMessageNotReadableException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Requisição inválida",
                 "O corpo da requisição está ausente ou mal formatado");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleParametroInvalido(MethodArgumentTypeMismatchException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
