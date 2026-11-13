@@ -9,7 +9,7 @@ public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_cliente")
-    private Integer id;
+    private Long id;
 
     @Column(name = "nome", length = 50, nullable = false)
     private String nome;
@@ -32,7 +32,7 @@ public class Cliente {
     @Column(name = "nacionalidade", length = 50, nullable = false)
     private String nacionalidade;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fk_endereco")
     private Endereco endereco;
 
@@ -49,11 +49,11 @@ public class Cliente {
         this.endereco = endereco;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

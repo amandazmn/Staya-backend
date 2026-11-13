@@ -2,7 +2,7 @@ package com.staya.api.dto;
 
 public class EnderecoResponseDTO {
 
-    private Integer id;
+    private Long id;
     private String logradouro;
     private String numero;
     private String complemento;
@@ -14,11 +14,11 @@ public class EnderecoResponseDTO {
 
     public EnderecoResponseDTO() {}
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
