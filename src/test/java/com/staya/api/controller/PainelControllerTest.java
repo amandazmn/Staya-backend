@@ -77,6 +77,12 @@ class PainelControllerTest {
         return criar("/estadias/checkin", "{\"reservaId\":%d,\"acompanhanteIds\":[%s]}".formatted(reservaId, ids));
     }
 
+    private void pagar(long estadiaId, String valor) throws Exception {
+        mvc.perform(post("/estadias/" + estadiaId + "/pagamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"forma\":\"PIX\",\"valor\":" + valor + "}"))
+                .andExpect(status().isCreated());
+    }
+
     @Test
     void painelSemMovimento() throws Exception {
         mvc.perform(get("/painel/dia"))
@@ -148,6 +154,7 @@ class PainelControllerTest {
                 // Hóspede além do período continua ocupando o quarto
                 .andExpect(jsonPath("$.ocupacao.quartosOcupados").value(1));
 
+        pagar(estadia, "900.00"); // 3 diárias: ficou um dia além do previsto
         mvc.perform(post("/estadias/" + estadia + "/checkout")).andExpect(status().isOk());
         mvc.perform(get("/painel/dia"))
                 .andExpect(jsonPath("$.saidasAtrasadas", hasSize(0)))
