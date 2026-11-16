@@ -1,7 +1,6 @@
 package com.staya.api.dto;
 
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,7 +16,6 @@ public class ReservaRequestDTO {
     private Long quartoId;
 
     @NotNull(message = "Data de entrada é obrigatória")
-    @FutureOrPresent(message = "Data de entrada não pode estar no passado")
     private LocalDate dataEntrada;
 
     @NotNull(message = "Data de saída é obrigatória")
