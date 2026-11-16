@@ -60,6 +60,10 @@ public interface QuartoRepository extends JpaRepository<Quarto, Long> {
                                    @Param("excluirStatus") StatusQuarto excluirStatus,
                                    @Param("statusAtivos") Collection<StatusReserva> statusAtivos);
 
+    /** Linhas [StatusQuarto, Long]: quantidade de quartos em cada status. */
+    @Query("select q.status, count(q) from Quarto q group by q.status")
+    List<Object[]> contarPorStatus();
+
     boolean existsByNumero(String numero);
 
     boolean existsByNumeroAndIdNot(String numero, Long id);

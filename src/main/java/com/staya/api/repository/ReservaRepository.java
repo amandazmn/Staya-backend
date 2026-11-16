@@ -48,6 +48,35 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
                            @Param("status") Collection<StatusReserva> status,
                            @Param("ignorarId") Long ignorarId);
 
+    /** Reservas com entrada exatamente na data (ex.: chegadas previstas do dia). */
+    @EntityGraph(attributePaths = {"cliente", "quarto", "quarto.tipoQuarto"})
+    @Query("""
+            select r from Reserva r
+            where r.dataEntrada = :data and r.status in :status
+            order by r.quarto.numero""")
+    List<Reserva> buscarPorEntrada(@Param("data") LocalDate data,
+                                   @Param("status") Collection<StatusReserva> status);
+
+    /** Reservas que deveriam ter chegado antes da data e não fizeram check-in (possível no-show). */
+    @EntityGraph(attributePaths = {"cliente", "quarto", "quarto.tipoQuarto"})
+    @Query("""
+            select r from Reserva r
+            where r.dataEntrada < :data and r.status in :status
+            order by r.dataEntrada, r.quarto.numero""")
+    List<Reserva> buscarComEntradaAntesDe(@Param("data") LocalDate data,
+                                          @Param("status") Collection<StatusReserva> status);
+
+    /**
+     * Quantidade de quartos ocupados (ou previstos) na noite da data: reservas cujo período cobre a data,
+     * mais hóspedes ainda no hotel além da saída prevista.
+     */
+    @Query("""
+            select count(distinct r.quarto.id) from Reserva r
+            where (r.status in :status and r.dataEntrada <= :data and r.dataSaida > :data)
+               or (r.status = com.staya.api.model.StatusReserva.EM_HOSPEDAGEM and r.dataEntrada <= :data)""")
+    long contarQuartosOcupados(@Param("data") LocalDate data,
+                               @Param("status") Collection<StatusReserva> status);
+
     boolean existsByClienteId(Long clienteId);
 
     boolean existsByQuartoId(Long quartoId);
