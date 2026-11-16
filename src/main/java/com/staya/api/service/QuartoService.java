@@ -73,6 +73,13 @@ public class QuartoService {
     @Transactional
     public QuartoResponseDTO alterarStatus(Long id, StatusQuarto novoStatus) {
         Quarto quarto = buscarEntidade(id);
+        // OCUPADO é controlado pelo check-in/check-out, nunca à mão
+        if (novoStatus == StatusQuarto.OCUPADO) {
+            throw new RegraNegocioException("O status OCUPADO é definido automaticamente pelo check-in");
+        }
+        if (quarto.getStatus() == StatusQuarto.OCUPADO) {
+            throw new RegraNegocioException("Quarto ocupado só muda de status pelo check-out");
+        }
         quarto.setStatus(novoStatus);
         return QuartoMapper.toResponse(quarto);
     }

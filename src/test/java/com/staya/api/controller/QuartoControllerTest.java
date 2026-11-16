@@ -116,20 +116,22 @@ class QuartoControllerTest {
     }
 
     @Test
-    void naoExcluiTipoComQuartosNemQuartoOcupado() throws Exception {
+    void naoExcluiTipoComQuartos() throws Exception {
         long tipoId = criarTipo("Standard");
         long quartoId = criar("/quartos", quarto("101", 1, tipoId));
 
         mvc.perform(delete("/tipos-quarto/" + tipoId)).andExpect(status().isConflict());
 
-        mvc.perform(patch("/quartos/" + quartoId + "/status").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"status\":\"OCUPADO\"}")).andExpect(status().isOk());
-        mvc.perform(delete("/quartos/" + quartoId)).andExpect(status().isConflict());
-
-        mvc.perform(patch("/quartos/" + quartoId + "/status").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"status\":\"LIMPEZA\"}")).andExpect(status().isOk());
         mvc.perform(delete("/quartos/" + quartoId)).andExpect(status().isNoContent());
         mvc.perform(delete("/tipos-quarto/" + tipoId)).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void statusOcupadoNaoPodeSerDefinidoManualmente() throws Exception {
+        long quartoId = criar("/quartos", quarto("101", 1, criarTipo("Standard")));
+        mvc.perform(patch("/quartos/" + quartoId + "/status").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"OCUPADO\"}"))
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test

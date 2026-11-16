@@ -1,7 +1,6 @@
 package com.staya.api.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -53,7 +52,6 @@ public class Reserva {
     @Column(name = "observacoes", length = 255)
     private String observacoes;
 
-    @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 
@@ -143,5 +141,9 @@ public class Reserva {
 
     public LocalDateTime getCriadoEm() {
         return criadoEm;
+    }
+
+    public void setCriadoEm(LocalDateTime criadoEm) {
+        this.criadoEm = criadoEm;
     }
 }
