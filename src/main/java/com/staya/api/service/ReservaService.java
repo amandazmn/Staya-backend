@@ -16,6 +16,9 @@ import com.staya.api.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -24,12 +27,14 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final QuartoRepository quartoRepository;
     private final ClienteService clienteService;
+    private final Clock clock;
 
     public ReservaService(ReservaRepository reservaRepository, QuartoRepository quartoRepository,
-                          ClienteService clienteService) {
+                          ClienteService clienteService, Clock clock) {
         this.reservaRepository = reservaRepository;
         this.quartoRepository = quartoRepository;
         this.clienteService = clienteService;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -44,16 +49,23 @@ public class ReservaService {
 
     @Transactional
     public ReservaResponseDTO criar(ReservaRequestDTO dto) {
+        return ReservaMapper.toResponse(criarEntidade(dto));
+    }
+
+    /** Usado também pelo check-in direto, que cria a reserva e já hospeda o cliente. */
+    @Transactional
+    Reserva criarEntidade(ReservaRequestDTO dto) {
         Reserva reserva = new Reserva();
         preencherEValidar(dto, reserva, null);
-        return ReservaMapper.toResponse(reservaRepository.save(reserva));
+        reserva.setCriadoEm(LocalDateTime.now(clock));
+        return reservaRepository.save(reserva);
     }
 
     /** Altera período, quarto, hóspedes ou observações de uma reserva ainda ativa; o valor é recalculado. */
     @Transactional
     public ReservaResponseDTO atualizar(Long id, ReservaRequestDTO dto) {
         Reserva reserva = buscarEntidade(id);
-        exigirAtiva(reserva, "alterada");
+        exigirEditavel(reserva, "alterada");
         preencherEValidar(dto, reserva, id);
         return ReservaMapper.toResponse(reserva);
     }
@@ -72,12 +84,15 @@ public class ReservaService {
     @Transactional
     public ReservaResponseDTO cancelar(Long id) {
         Reserva reserva = buscarEntidade(id);
-        exigirAtiva(reserva, "cancelada");
+        exigirEditavel(reserva, "cancelada");
         reserva.setStatus(StatusReserva.CANCELADA);
         return ReservaMapper.toResponse(reserva);
     }
 
     private void preencherEValidar(ReservaRequestDTO dto, Reserva reserva, Long idAtual) {
+        if (dto.getDataEntrada().isBefore(LocalDate.now(clock))) {
+            throw new RegraNegocioException("Data de entrada não pode estar no passado");
+        }
         // Bloqueia o quarto antes de checar conflitos: reservas concorrentes do mesmo quarto esperam aqui.
         Quarto quarto = quartoRepository.findByIdComBloqueio(dto.getQuartoId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Quarto", dto.getQuartoId()));
@@ -104,13 +119,13 @@ public class ReservaService {
         reserva.aplicarTarifa(quarto.getTipoQuarto().getTarifaBase());
     }
 
-    private void exigirAtiva(Reserva reserva, String acao) {
-        if (!reserva.getStatus().isAtiva()) {
+    private void exigirEditavel(Reserva reserva, String acao) {
+        if (!reserva.getStatus().isEditavel()) {
             throw new ConflitoException("Reserva com status " + reserva.getStatus() + " não pode ser " + acao);
         }
     }
 
-    private Reserva buscarEntidade(Long id) {
+    Reserva buscarEntidade(Long id) {
         return reservaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Reserva", id));
     }

@@ -110,8 +110,8 @@ class ReservaControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erros.periodoValido").exists());
         postReserva(quartoCasal, LocalDate.now().minusDays(1), D10, 1)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.erros.dataEntrada").exists());
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.detail").value("Data de entrada não pode estar no passado"));
         mvc.perform(post("/reservas").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erros.clienteId").exists())
