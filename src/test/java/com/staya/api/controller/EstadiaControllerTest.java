@@ -73,6 +73,12 @@ class EstadiaControllerTest {
         return ((Number) JsonPath.read(resultado.andReturn().getResponse().getContentAsString(), "$.id")).longValue();
     }
 
+    private void pagar(long estadiaId, String valor) throws Exception {
+        mvc.perform(post("/estadias/" + estadiaId + "/pagamentos").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"forma\":\"PIX\",\"valor\":" + valor + "}"))
+                .andExpect(status().isCreated());
+    }
+
     @Test
     void checkinOcupaQuartoEColocaReservaEmHospedagem() throws Exception {
         long reservaId = reservaConfirmada(hoje, hoje.plusDays(3));
@@ -97,6 +103,7 @@ class EstadiaControllerTest {
     void checkoutNoDiaPrevistoLiberaQuartoParaLimpeza() throws Exception {
         long estadiaId = idDe(checkin(reservaConfirmada(hoje, hoje.plusDays(3))));
         relogio.avancarDias(3);
+        pagar(estadiaId, "900.00");
 
         mvc.perform(post("/estadias/" + estadiaId + "/checkout"))
                 .andExpect(status().isOk())
@@ -115,6 +122,7 @@ class EstadiaControllerTest {
         long reservaId = reservaConfirmada(hoje, hoje.plusDays(5));
         long estadiaId = idDe(checkin(reservaId));
         relogio.avancarDias(2);
+        pagar(estadiaId, "600.00");
 
         mvc.perform(post("/estadias/" + estadiaId + "/checkout"))
                 .andExpect(jsonPath("$.quantidadeDiarias").value(2))
@@ -131,6 +139,7 @@ class EstadiaControllerTest {
     @Test
     void checkoutNoMesmoDiaCobraUmaDiaria() throws Exception {
         long estadiaId = idDe(checkin(reservaConfirmada(hoje, hoje.plusDays(2))));
+        pagar(estadiaId, "300.00");
         mvc.perform(post("/estadias/" + estadiaId + "/checkout"))
                 .andExpect(jsonPath("$.quantidadeDiarias").value(1))
                 .andExpect(jsonPath("$.valorHospedagem").value(300.00));
@@ -258,6 +267,7 @@ class EstadiaControllerTest {
 
         mvc.perform(get("/estadias").param("status", "EM_ANDAMENTO")).andExpect(jsonPath("$", hasSize(1)));
         mvc.perform(get("/estadias").param("clienteId", String.valueOf(titular))).andExpect(jsonPath("$", hasSize(1)));
+        pagar(estadiaId, "300.00");
         mvc.perform(post("/estadias/" + estadiaId + "/checkout")).andExpect(status().isOk());
         mvc.perform(get("/estadias").param("status", "EM_ANDAMENTO")).andExpect(jsonPath("$", hasSize(0)));
         mvc.perform(get("/estadias").param("status", "ENCERRADA")).andExpect(jsonPath("$", hasSize(1)));
