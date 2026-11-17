@@ -14,7 +14,6 @@ import com.staya.api.repository.EstadiaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,15 +32,13 @@ public class EstadiaService {
     private final EstadiaRepository estadiaRepository;
     private final ReservaService reservaService;
     private final ClienteService clienteService;
-    private final ContaService contaService;
     private final Clock clock;
 
     public EstadiaService(EstadiaRepository estadiaRepository, ReservaService reservaService,
-                          ClienteService clienteService, ContaService contaService, Clock clock) {
+                          ClienteService clienteService, Clock clock) {
         this.estadiaRepository = estadiaRepository;
         this.reservaService = reservaService;
         this.clienteService = clienteService;
-        this.contaService = contaService;
         this.clock = clock;
     }
 
@@ -99,7 +96,6 @@ public class EstadiaService {
      * Encerra a estadia. As diárias passam a ser as efetivamente usadas (do dia de entrada da reserva
      * até hoje, mínimo 1): saída antecipada libera o quarto para novas reservas e reduz o valor.
      * O quarto vai para LIMPEZA e a reserva para CONCLUIDA.
-     * Exige a conta quitada (saldo <= 0) já com o valor final da hospedagem.
      */
     @Transactional
     public EstadiaResponseDTO checkout(Long id) {
@@ -111,14 +107,6 @@ public class EstadiaService {
         Reserva reserva = estadia.getReserva();
 
         long diarias = Math.max(1, ChronoUnit.DAYS.between(reserva.getDataEntrada(), agora.toLocalDate()));
-        // Saldo calculado antes de alterar qualquer dado: se houver pendência, nada muda
-        BigDecimal valorHospedagem = reserva.getValorDiaria().multiply(BigDecimal.valueOf(diarias));
-        BigDecimal saldo = contaService.saldoCom(estadia, valorHospedagem);
-        if (saldo.signum() > 0) {
-            throw new RegraNegocioException("Conta com saldo pendente de " + ContaService.formatarReais(saldo)
-                    + "; registre o pagamento antes do check-out");
-        }
-
         reserva.setDataSaida(reserva.getDataEntrada().plusDays(diarias));
         reserva.aplicarTarifa(reserva.getValorDiaria());
         reserva.setStatus(StatusReserva.CONCLUIDA);
