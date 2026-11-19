@@ -1,5 +1,6 @@
 # Staya API
 
+[![CI](https://github.com/amandazmn/Staya-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/amandazmn/Staya-backend/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F)
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1)
